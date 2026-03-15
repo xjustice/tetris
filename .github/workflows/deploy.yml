@@ -26,8 +26,10 @@ jobs:
           archive_output: false
           export_debug: false
 
-      - name: Copy Service Worker
-        run: cp coi-serviceworker.js build/
+      - name: Copy Service Worker and AdSense files
+        run: |
+          cp coi-serviceworker.js build/
+          cp ads.txt build/
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
