@@ -26,9 +26,12 @@ jobs:
           archive_output: false
           export_debug: false
 
-      - name: Copy Service Worker and AdSense files
+      - name: Copy Build Artifacts
         run: |
           mkdir -p build
+          # Copy Godot export results (assuming preset name is 'Web')
+          cp -r /home/runner/.local/share/godot/builds/Web/* build/
+          # Copy extra files
           cp coi-serviceworker.js build/
           cp ads.txt build/
 
