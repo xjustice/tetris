@@ -47,8 +47,8 @@ const BG_TINTS = [
 var fall_timer: float = 0.0
 
 # Movement (DAS - Delayed Auto Shift)
-@export var das_delay: float = 0.5     # Time to wait before repeating
-@export var das_interval: float = 0.05  # Speed of repetition
+@export var das_delay: float = 0.18     # Standard Tetris DAS (~180ms)
+@export var das_interval: float = 0.04  # Standard Tetris ARR (~40ms)
 var das_timer: float = 0.0
 var das_direction: Vector2i = Vector2i.ZERO
 
@@ -433,7 +433,6 @@ func _input(event: InputEvent) -> void:
 		is_paused = true
 		if confirm_popup:
 			confirm_popup.visible = true
-			# Grab focus for the first button to enable keyboard navigation
 			confirm_popup.get_node("VBoxContainer/RestartBtn").grab_focus()
 		return
 
@@ -445,27 +444,35 @@ func _input(event: InputEvent) -> void:
 
 	if is_paused or is_shifting: return
 
-	# Handle Directional Input and DAS Initialization
-	if event.is_action_pressed("ui_left"):
+	# Movement Input (Arrows + WASD)
+	var move_left = event.is_action_pressed("ui_left") or (event is InputEventKey and event.pressed and event.keycode == KEY_A)
+	var move_right = event.is_action_pressed("ui_right") or (event is InputEventKey and event.pressed and event.keycode == KEY_D)
+	var move_down = event.is_action_pressed("ui_down") or (event is InputEventKey and event.pressed and event.keycode == KEY_S)
+	var rotate = event.is_action_pressed("ui_up") or (event is InputEventKey and event.pressed and (event.keycode == KEY_W or event.keycode == KEY_K))
+	var hard_drop = event.is_action_pressed("ui_accept") or (event is InputEventKey and event.pressed and event.keycode == KEY_SPACE)
+	
+	if move_left:
 		das_direction = Vector2i(-1, 0)
 		das_timer = 0.0
 		move_piece(rotate_vector_by_gravity(das_direction))
-	elif event.is_action_pressed("ui_right"):
+	elif move_right:
 		das_direction = Vector2i(1, 0)
 		das_timer = 0.0
 		move_piece(rotate_vector_by_gravity(das_direction))
 	
-	# Stop DAS on release
-	if (event.is_action_released("ui_left") and das_direction == Vector2i(-1, 0)) or \
-	   (event.is_action_released("ui_right") and das_direction == Vector2i(1, 0)):
+	# Release DAS
+	var released_left = event.is_action_released("ui_left") or (event is InputEventKey and not event.pressed and event.keycode == KEY_A)
+	var released_right = event.is_action_released("ui_right") or (event is InputEventKey and not event.pressed and event.keycode == KEY_D)
+	
+	if (released_left and das_direction == Vector2i(-1, 0)) or \
+	   (released_right and das_direction == Vector2i(1, 0)):
 		das_direction = Vector2i.ZERO
 
-	if event.is_action_pressed("ui_down"):
+	if move_down:
 		move_piece(gravity_dir)
-	elif event.is_action_pressed("ui_up"):
+	elif rotate:
 		rotate_piece()
-	elif event.is_action_pressed("ui_accept"):
-		# Start Hard Drop with Trail
+	elif hard_drop:
 		while move_piece(gravity_dir):
 			create_trail_ghost(active_piece_pos)
 		lock_piece()
